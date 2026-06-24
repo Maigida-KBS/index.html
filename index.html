@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resilience Snapshot | KBS &amp; NERC</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--navy:#1A3A5C;--blue:#2B9CD8;--bw:#EAF4FB;--dark:#1a1a1a;--body:#2D3748;--muted:#5A7184;--lg:#f5f7f9;--bdr:#d0d8e0;--w:#fff;--grn:#2E8B6A;--amb:#D4930A;--red:#C0392B}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--lg);color:var(--body);line-height:1.6}
+.ctr{max-width:820px;margin:0 auto;padding:20px}
+.hdr{background:var(--navy);color:var(--w);padding:40px 30px;text-align:center}
+.hdr .kbs{font-size:11px;letter-spacing:4px;color:rgba(255,255,255,0.5);text-transform:uppercase;margin-bottom:16px}
+.hdr h1{font-size:32px;font-weight:700;margin-bottom:6px}
+.hdr .sub{font-size:16px;color:var(--blue)}
+.hdr .meta{font-size:12px;color:rgba(255,255,255,0.4);margin-top:16px}
+.priv{background:var(--bw);border-left:4px solid var(--blue);padding:16px 20px;margin:24px 0;font-size:14px;color:var(--navy);border-radius:0 6px 6px 0}
+.priv strong{display:block;margin-bottom:4px}
+.sec{background:var(--w);border-radius:10px;padding:28px 24px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,0.06)}
+.sec-l{font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--blue);margin-bottom:6px;font-weight:600}
+.sec h2{font-size:20px;color:var(--navy);margin-bottom:4px;font-weight:700}
+.sec .sd{font-size:14px;color:var(--muted);margin-bottom:20px;font-style:italic}
+.itm{padding:16px 0;border-bottom:1px solid var(--bdr)}.itm:last-child{border-bottom:none}
+.in{font-size:13px;font-weight:700;color:var(--blue);margin-bottom:4px}
+.it{font-size:15px;color:var(--dark);margin-bottom:12px;line-height:1.5}
+.lik{display:flex;justify-content:space-between;gap:6px}
+.lik label{flex:1;text-align:center;cursor:pointer}
+.lik label input{display:none}
+.lik label .bn{display:block;padding:10px 4px;border:2px solid var(--bdr);border-radius:8px;font-size:12px;color:var(--muted);transition:all 0.2s;font-weight:500;background:var(--w)}
+.lik label .bn .vl{display:block;font-size:18px;font-weight:700;color:var(--navy);margin-bottom:2px}
+.lik label input:checked+.bn{border-color:var(--blue);background:var(--bw);color:var(--navy)}
+.lik label:hover .bn{border-color:var(--blue);background:var(--bw)}
+.op{margin-bottom:20px}.op label{display:block;font-size:15px;color:var(--dark);margin-bottom:8px;line-height:1.5}
+.op label span{font-weight:700;color:var(--blue);margin-right:6px}
+.op textarea{width:100%;border:2px solid var(--bdr);border-radius:8px;padding:12px;font-size:14px;font-family:inherit;resize:vertical;min-height:80px;color:var(--dark)}
+.op textarea:focus{outline:none;border-color:var(--blue)}
+.sw{text-align:center;padding:30px 0}
+.sb{background:var(--blue);color:var(--w);border:none;padding:16px 48px;font-size:17px;font-weight:700;border-radius:10px;cursor:pointer;transition:background 0.2s}
+.sb:hover{background:var(--navy)}.sb:disabled{background:var(--bdr);cursor:not-allowed}
+.pb{background:var(--bdr);height:6px;border-radius:3px;margin:20px 0;overflow:hidden}
+.pf{height:100%;background:var(--blue);border-radius:3px;transition:width 0.4s}
+.pt{font-size:13px;color:var(--muted);text-align:right;margin-bottom:4px}
+.res{display:none}.res.sh{display:block}.asm.hd{display:none}
+.hero{background:var(--navy);color:var(--w);border-radius:12px;padding:40px;text-align:center;margin-bottom:24px}
+.hero .sn{font-size:72px;font-weight:800;line-height:1}
+.hero .sl{font-size:14px;color:rgba(255,255,255,0.5);margin-top:4px;letter-spacing:2px;text-transform:uppercase}
+.hero .bd{display:inline-block;margin-top:16px;padding:6px 20px;border-radius:20px;font-size:14px;font-weight:600}
+.bs{background:var(--grn);color:var(--w)}.bm{background:#B8860B;color:var(--w)}.bdv{background:var(--amb);color:var(--w)}.bc{background:var(--red);color:var(--w)}
+.cw{background:var(--w);border-radius:10px;padding:24px;margin-bottom:24px;box-shadow:0 1px 4px rgba(0,0,0,0.06);text-align:center}
+.cw h3{font-size:16px;color:var(--navy);margin-bottom:16px;font-weight:700}
+canvas{max-width:100%}
+.nar{background:var(--w);border-radius:10px;padding:24px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,0.06)}
+.nar h3{font-size:18px;color:var(--navy);margin-bottom:12px;font-weight:700}
+.nar p{font-size:15px;color:var(--body);line-height:1.7;margin-bottom:12px}
+.phc{background:linear-gradient(135deg,var(--navy),#2a5a8a);color:var(--w);border-radius:10px;padding:24px;margin-bottom:20px}
+.phc h3{font-size:14px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.6);margin-bottom:8px}
+.phc .phn{font-size:22px;font-weight:700;margin-bottom:12px}
+.phc p{font-size:14px;line-height:1.6;color:rgba(255,255,255,0.85)}
+.pc{background:var(--bw);border-radius:10px;padding:20px 24px;margin-bottom:12px}
+.pc h4{font-size:15px;color:var(--navy);margin-bottom:6px;font-weight:700}
+.pc p{font-size:14px;color:var(--body);line-height:1.6}
+.dc{background:var(--w);border-radius:10px;padding:20px 24px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06)}
+.dh{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.dn{font-size:16px;font-weight:700;color:var(--navy)}
+.dsc{font-size:24px;font-weight:800}
+.dbr{background:var(--bdr);height:10px;border-radius:5px;overflow:hidden;margin-bottom:10px}
+.dfl{height:100%;border-radius:5px}
+.di{font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:8px}
+.da{font-size:14px;color:var(--navy);line-height:1.5;padding:10px 14px;background:var(--bw);border-radius:6px;border-left:3px solid var(--blue)}
+.da strong{color:var(--blue)}
+.fi{background:var(--w);border-left:4px solid var(--amb);border-radius:0 8px 8px 0;padding:14px 18px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
+.fi .fn{font-size:12px;font-weight:700;color:var(--amb);margin-bottom:2px}
+.fi .ft{font-size:14px;color:var(--dark);margin-bottom:4px}
+.fi .fnt{font-size:13px;color:var(--muted);line-height:1.5}
+.sln{background:var(--w);border-radius:10px;padding:16px 20px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,0.06);display:flex;align-items:center;gap:14px}
+.sdt{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.sln .sld{font-size:13px;color:var(--blue);font-weight:600}
+.sln .sls{font-size:14px;color:var(--navy);font-weight:700}
+.sln .slw{font-size:13px;color:var(--muted)}
+.ins{background:var(--bw);border-radius:10px;padding:20px 24px;margin-bottom:12px}
+.ins h4{font-size:15px;color:var(--navy);margin-bottom:6px;font-weight:700}
+.ins p{font-size:14px;color:var(--body);line-height:1.6}
+.acts{text-align:center;padding:24px 0;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.ab{padding:12px 28px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:2px solid var(--blue);transition:all 0.2s}
+.abp{background:var(--blue);color:var(--w)}.abs{background:var(--w);color:var(--blue)}
+@media print{body{background:#fff}.hdr{padding:20px}.sw,.acts,.priv{display:none}.sec,.dc,.cw,.nar,.phc,.pc{break-inside:avoid;box-shadow:none;border:1px solid #ddd}}
+@media(max-width:600px){.ctr{padding:12px}.hdr{padding:24px 16px}.hdr h1{font-size:24px}.sec{padding:20px 16px}.lik{gap:4px}.lik label .bn{padding:8px 2px;font-size:11px}.lik label .bn .vl{font-size:16px}.hero .sn{font-size:56px}}
+</style>
+</head>
+<body>
+<div class="hdr"><div class="kbs">Kaduna Business School</div><h1>Resilience Snapshot</h1><div class="sub">Self-Assessment Instrument</div><div class="meta">Resilience &amp; Renewal Programme &nbsp;|&nbsp; NERC</div></div>
+<div class="ctr">
+<div class="asm" id="aF">
+<div class="priv"><strong>This assessment is entirely private.</strong>No data is stored, transmitted, or shared. Your responses exist only in your browser and disappear when you close the page.</div>
+<div class="pt"><span id="pC">0</span> of 20 items completed</div>
+<div class="pb"><div class="pf" id="pFl" style="width:0%"></div></div>
+<div class="sec"><div class="sec-l">Section A</div><h2>Emotional Awareness</h2><div class="sd">How clearly can you identify, articulate, and manage what you are feeling?</div><div id="sA"></div></div>
+<div class="sec"><div class="sec-l">Section B</div><h2>Professional Identity and Confidence</h2><div class="sd">How has your sense of professional capability and purpose shifted?</div><div id="sB"></div></div>
+<div class="sec"><div class="sec-l">Section C</div><h2>Energy and Engagement</h2><div class="sd">How have your energy, motivation, and participation patterns changed?</div><div id="sC"></div></div>
+<div class="sec"><div class="sec-l">Section D</div><h2>Cognitive Patterns</h2><div class="sd">What thought patterns have become more frequent or persistent?</div><div id="sD"></div></div>
+<div class="sec"><div class="sec-l">Section E</div><h2>Forward Orientation</h2><div class="sd">How do you see your professional path from here?</div><div id="sE"></div></div>
+<div class="sec"><div class="sec-l">Section F</div><h2>Personal Reflection</h2><div class="sd">Take a few moments to respond in your own words.</div>
+<div class="op"><label><span>21.</span> What aspect of your professional life currently gives you the most energy and satisfaction?</label><textarea id="o1"></textarea></div>
+<div class="op"><label><span>22.</span> What is the one thing you would most like to feel differently about in the coming months?</label><textarea id="o2"></textarea></div>
+<div class="op"><label><span>23.</span> If you could design the next phase of your career without constraint, what would it look like?</label><textarea id="o3"></textarea></div>
+</div>
+<div class="sw"><button class="sb" id="sBtn" onclick="gen()">Generate Your Resilience Profile</button></div>
+</div>
+<div class="res" id="rP"></div>
+</div>
+<script>
+const I=[{id:1,t:"I can clearly name the primary emotions I am experiencing in this period of my career",d:"A",r:false},{id:2,t:"I notice a gap between what I express to colleagues and what I feel privately",d:"A",r:true},{id:3,t:"My emotional responses feel proportionate to the situations that trigger them",d:"A",r:false},{id:4,t:"I have found it useful to reflect on, or talk through, how I am feeling with someone I trust",d:"A",r:false},{id:5,t:"I remain confident in the quality of my professional contributions",d:"B",r:false},{id:6,t:"My sense of professional purpose feels as strong as it did six months ago",d:"B",r:false},{id:7,t:"I trust my own judgment in my area of expertise as fully as I did before",d:"B",r:false},{id:8,t:"I feel that my experience and knowledge continue to be valued by those I work with",d:"B",r:false},{id:9,t:"My energy levels at work have remained consistent over the past month",d:"C",r:false},{id:10,t:"I look forward to engaging with my professional responsibilities each day",d:"C",r:false},{id:11,t:"I am investing the same effort in developing my team and direct reports as before",d:"C",r:false},{id:12,t:"I have maintained my usual level of participation in meetings, committees, and institutional activities",d:"C",r:false},{id:13,t:"I find my mind returning to the same thoughts repeatedly, even when I try to focus elsewhere",d:"D",r:true},{id:14,t:"I am able to maintain perspective on my career as a whole rather than focusing on a single event",d:"D",r:false},{id:15,t:"I notice myself second-guessing decisions I would previously have made with confidence",d:"D",r:true},{id:16,t:"I can distinguish between a temporary period of disappointment and a fundamental reassessment of my direction",d:"D",r:false},{id:17,t:"I can articulate specific professional goals I am working toward in the next twelve months",d:"E",r:false},{id:18,t:"I feel motivated to invest in my own development and growth",d:"E",r:false},{id:19,t:"I see meaningful opportunities for contribution in my current role",d:"E",r:false},{id:20,t:"I believe the next chapter of my career is one I can define for myself",d:"E",r:false}];
+const DN={A:"Emotional Awareness",B:"Professional Identity & Confidence",C:"Energy & Engagement",D:"Cognitive Patterns",E:"Forward Orientation"};
+const lb=["Strongly\nDisagree","Disagree","Neutral","Agree","Strongly\nAgree"];
+const SM={A:"sA",B:"sB",C:"sC",D:"sD",E:"sE"};
+I.forEach(i=>{const c=document.getElementById(SM[i.d]);const d=document.createElement("div");d.className="itm";d.innerHTML=`<div class="in">Question ${i.id}</div><div class="it">${i.t}</div><div class="lik">${[1,2,3,4,5].map(v=>`<label><input type="radio" name="q${i.id}" value="${v}" onchange="uP()"><div class="bn"><span class="vl">${v}</span>${lb[v-1].replace('\n','<br>')}</div></label>`).join("")}</div>`;c.appendChild(d)});
+function uP(){let a=0;I.forEach(i=>{if(document.querySelector(`input[name="q${i.id}"]:checked`))a++});document.getElementById("pC").textContent=a;document.getElementById("pFl").style.width=(a/20*100)+"%";document.getElementById("sBtn").disabled=a<20}uP();
+function gS(i){const e=document.querySelector(`input[name="q${i.id}"]:checked`);if(!e)return null;let v=parseInt(e.value);return i.r?(6-v):v}
+
+const IN={1:"Difficulty naming emotions limits your ability to manage them. Practise naming three specific emotions each day. Precision in emotional language is the foundation of emotional management.",2:"A large gap between public and private experience creates sustained cognitive load that is exhausting over time.",3:"Disproportionate emotional responses signal your brain\u2019s prediction system is recalibrating. This is temporary but needs management.",4:"Not engaging in reflective conversation means processing the disruption alone. Consider whether support structures are available but unused.",5:"Reduced confidence in your contributions contradicts the evidence of your performance. The gap between evidence and feeling is characteristic of contract violation.",6:"Diminished sense of purpose often follows a disruption to expected career progression. The legacy questions address this directly.",7:"Self-doubt in areas of established expertise is a hallmark of psychological contract breach. Your competence has not changed; your narrative about it has.",8:"Feeling undervalued by colleagues may reflect projection of institutional non-recognition onto interpersonal relationships.",9:"Energy depletion is a physiological response to sustained stress. A daily 5-minute walk focused entirely on physical sensations (feet on ground, air on skin, sounds around you) reconnects body and mind.",10:"Loss of anticipation for professional responsibilities indicates emotional disengagement. Choose one professional task this week that you do because you want to, not because you must. Autonomous choice rebuilds motivation from the inside.",11:"Reduced investment in developing others often signals your own developmental energy is depleted. Restore your own trajectory first.",12:"Withdrawal from institutional participation protects in the short term but compounds isolation over time.",13:"Ruminative thought loops are the cognitive signature of unresolved transition. When the thought loop begins, use the 5-4-3-2-1 sensory grounding technique. Name what you see, hear, touch, smell, taste. This interrupts the ruminative cycle within minutes.",14:"Loss of career perspective narrows your field of vision precisely when breadth is needed.",15:"Second-guessing established competencies erodes professional functioning. This pattern accelerates if unaddressed.",16:"Inability to distinguish temporary disappointment from fundamental reassessment suggests the disruption has not yet been fully processed.",17:"Absence of articulated goals indicates forward planning has stalled. Begin with the smallest possible next step rather than comprehensive planning.",18:"Diminished motivation to invest in growth compounds the original problem. Set one specific development goal with a date and trigger: If [time/situation], then I will [specific action]. Structure converts diminished motivation into automatic behaviour.",19:"Difficulty seeing opportunities in your current role may reflect genuine limitations or a narrowed perspective. Ask yourself: is this a limitation of the role, or a limitation of my current perspective? Writing out both possibilities often reveals which is closer to the truth.",20:"Feeling unable to define your own career trajectory is the autonomy dimension under maximum pressure. Restoring even small choices rebuilds agency."};
+
+const IP={A:{h:{i:"Strong emotional self-awareness. You can identify and articulate what you are experiencing, and the gap between public composure and private experience is manageable.",a:"Sustain this. Use your emotional clarity as a daily check-in: each morning, name your dominant emotion in a single word. This simple practice maintains awareness and provides an early warning system when your state shifts."},m:{i:"Developing emotional awareness. You recognise that something has shifted but may struggle to articulate precisely what. A noticeable gap between professional expression and private experience may be present.",a:"Practise naming specific emotions rather than general terms. Replace \u201Cstressed\u201D with what you actually feel: frustrated, overlooked, uncertain, flat. Precision in language is the first step toward precision in management of your emotional state."},l:{i:"Emotional awareness significantly affected. Difficulty naming emotions, responses disconnected from triggers, or persistent numbness may be present.",a:"Your brain constructs emotions from predictions based on past experience. Career disruption rewrites those predictions, creating unfamiliar emotional responses. A daily 2-minute body scan (systematically noticing physical sensations from head to feet) rebuilds the connection between what you feel and your awareness of it."}},B:{h:{i:"Professional identity and confidence remain intact. You continue to trust your capabilities and feel your contributions are valued, independent of the promotion outcome.",a:"This is a core resilience asset. Channel it into one specific professional initiative this month that is entirely your choice: a project, a conversation, a development activity. Confidence without action dissipates; confidence with action builds momentum."},m:{i:"Professional confidence shaken in specific areas. You may still trust your expertise broadly but find yourself doubting aspects of your judgment or questioning whether your contributions are recognised.",a:"Distinguish between institutional recognition (which was withheld) and professional competence (which was not). Write down three specific contributions you have made in the past six months. The evidence of your competence exists independent of the promotion outcome."},l:{i:"Professional identity significantly disrupted. Self-doubt has entered areas where certainty previously existed. You may question your effectiveness in ways that contradict your performance evidence.",a:"Reconnect with what you contribute independent of advancement decisions. Ask three trusted colleagues what they value most about working with you. External evidence often corrects internal narratives that have been distorted by disappointment."}},C:{h:{i:"Energy and engagement levels remain strong. You continue to invest in responsibilities and participate actively in institutional life.",a:"Monitor this carefully. High energy after a disruption can be compensatory rather than genuine. Check whether you are performing to prove something or because the work itself still engages you. If it is the former, schedule deliberate recovery time before the strain accumulates."},m:{i:"Energy and engagement have shifted noticeably. Some days are more difficult than others. Reduced investment in previously valued activities may be present.",a:"Identify one specific professional activity that still generates genuine energy. Protect it this week by scheduling it and treating it as non-negotiable. This anchor prevents full disengagement while other areas recover."},l:{i:"Energy and engagement significantly depleted. Withdrawal from meetings, reduced participation, or minimum-level performance in previously strong areas.",a:"Rebuild engagement incrementally, not wholesale. Choose one meeting, one relationship, or one responsibility to re-invest in this week. Full re-engagement is not the goal; one deliberate step is. Implementation science shows that small, specific actions succeed where broad intentions fail."}},D:{h:{i:"Constructive thinking patterns. You maintain perspective on your career as a whole, you are not trapped in ruminative loops, and decision-making confidence remains largely intact.",a:"This cognitive resilience is valuable. Use it to regularly reframe setbacks for yourself: when a negative thought arises, ask whether it describes a permanent condition or a temporary state. Maintaining this distinction protects your perspective over time."},m:{i:"Some unhelpful thought patterns have become more frequent. Increased rumination, periodic self-doubt, or difficulty maintaining perspective beyond the promotion event may be present.",a:"These patterns are features of the Neutral Zone of transition, not permanent changes to how you think. When rumination begins, use the 5-4-3-2-1 grounding technique to interrupt the cycle. The goal is not to stop thinking about the event but to prevent the loop from becoming automatic."},l:{i:"Persistent ruminative thinking, frequent self-doubt, and difficulty maintaining perspective are significantly affecting cognitive functioning. Events may be replayed repeatedly.",a:"Priority area. Your brain\u2019s prediction system is recalibrating after the disruption, which produces repetitive thought patterns. Use grounding techniques (sensory awareness, structured breathing) for immediate interruption. Then redirect: write down one constructive action you will take today, with a specific time and trigger. Redirecting cognitive energy from rumination to action is the most effective intervention."}},E:{h:{i:"Clear sense of professional direction. You can articulate goals, see opportunities for meaningful contribution, and feel motivated to invest in development.",a:"Structure your forward momentum into specific implementation intentions. For each goal, specify: If [situation], then I will [action]. For example: If it is Monday morning at 9am, then I will spend 30 minutes on [specific development activity]. Motivation without structure dissipates; implementation intentions convert direction into action."},m:{i:"Forward orientation uncertain. You may struggle to articulate clear professional goals or feel ambivalent about investing in your own development.",a:"Reconnect with purpose by answering: What do I want my professional impact to be, independent of my grade level? Write your answer in a single sentence. This becomes the foundation for specific commitments. Purpose precedes planning."},l:{i:"Difficult to see a professional path forward. Goal-setting feels premature or pointless. The future appears uncertain or unappealing.",a:"Begin with the smallest possible forward action. You do not need clarity about the future to take one step. Identify one thing you can do tomorrow that moves you in any positive direction. Specify the time and the place. Do it. Then identify the next one. Momentum builds from action, not from vision."}}};
+
+const SSM={A:{s:"Build Your Emotional Vocabulary",w:"Practise naming specific emotions daily. Replace general terms with precise language. Use body-scan and grounding techniques to reconnect awareness with experience."},B:{s:"Reconnect With Your Professional Identity",w:"Write down three recent contributions you are proud of. Ask trusted colleagues what they value about your work. Separate institutional recognition from professional competence."},C:{s:"Rebuild Engagement Incrementally",w:"Identify one activity that still generates genuine energy and protect it. Re-invest in one meeting, relationship, or responsibility this week. Small steps, not wholesale change."},D:{s:"Interrupt Ruminative Patterns",w:"Use sensory grounding (5-4-3-2-1) when thought loops begin. Redirect cognitive energy by writing one specific action with a time and trigger. Rumination diminishes when replaced by structured action."},E:{s:"Define One Concrete Next Step",w:"Write a single sentence describing the professional impact you want to have. Then identify the smallest action you can take this week toward it. Momentum builds from action, not from clarity."}};
+
+function gen(){
+  const di={};const as=[];let ok=true;
+  I.forEach(i=>{if(!di[i.d])di[i.d]=[];const s=gS(i);if(s===null)ok=false;else{di[i.d].push(s);as.push({id:i.id,t:i.t,s:s,d:i.d})}});
+  if(!ok){alert("Please answer all 20 items.");return}
+  const ds={};let tt=0,tc=0;Object.keys(di).forEach(d=>{const a=di[d];ds[d]=a.reduce((x,y)=>x+y,0)/a.length;tt+=ds[d];tc++});
+  const ov=tt/tc;const so=Object.entries(ds).sort((a,b)=>a[1]-b[1]);
+  const lo=so[0],hi=so[so.length-1],rng=hi[1]-lo[1];
+  const li=as.sort((a,b)=>a.s-b.s).slice(0,3);
+
+  let ph,pd;
+  if(ds.A<=2.5&&ds.D<=2.5){ph="Emotional Shock";pd="Your scores suggest you are in the early stages of processing the career disruption. Both emotional awareness and cognitive patterns are significantly affected, characterised by difficulty naming feelings, intrusive thoughts, and disorientation. This is a normal initial response to psychological contract violation. Begin by building your emotional vocabulary: practise naming specific emotions rather than general terms. When intrusive thoughts arise, use a brief grounding technique (focus on five things you can see, four you can hear, three you can touch) to interrupt the cycle.";}
+  else if(ds.D<=2.5&&ds.E<=2.5){ph="Cognitive Rumination";pd="Your profile suggests you have moved past initial shock but are caught in ruminative thought loops: replaying events, questioning decisions, comparing trajectories. Recognise that you are in the Neutral Zone of transition: the space between your old professional narrative and the new one. This is not failure. Write down what you are replaying, then ask yourself: is this thought helping me move forward or keeping me stuck?";}
+  else if(ds.C<=2.5&&ds.E<=2.5){ph="Behavioural Adjustment";pd="Your scores suggest withdrawal or reduced engagement. Energy and forward orientation are most affected. You may be going through the motions while internally disengaging. This pattern is sustainable short-term but corrosive over time. Choose one small, specific action you can take this week that is entirely within your control. Not a goal, but an action with a date, a time, and a trigger. Momentum rebuilds from single steps, not from plans.";}
+  else if(ov>=3.5){ph="Active Recalibration";pd="Your overall profile indicates you are moving through the transition with awareness and emerging forward momentum. While individual domains may show areas for attention, your overall resilience capacity is intact. Structure your forward momentum into three specific implementation intentions: one action to start, one pattern to stop, one practice to sustain. Each must specify when, where, and what triggers it.";}
+  else{ph="Mixed Processing";pd="Your profile shows an uneven pattern across dimensions, characteristic of mid-transition processing. Some areas remain strong while others are significantly affected. This unevenness reflects the selective impact of career disruption on different aspects of professional functioning. Address each dimension in sequence: name what you feel, reconnect with your professional strengths, identify one energy source to protect, interrupt one ruminative pattern, and define one concrete next step.";}
+
+  const pa=[];
+  if(ds.A>=3.5&&ds.D<=2.5)pa.push({t:"Awareness Without Resolution",d:"You can name what you feel (strong emotional awareness) but cannot interrupt the thought loops that accompany it (low cognitive patterns). Recognition precedes regulation. Practise a brief sensory grounding exercise (5-4-3-2-1: name five things you see, four you hear, three you touch, two you smell, one you taste) when thought loops begin. This redirects your nervous system from threat processing to present-moment awareness."});
+  if(ds.B>=3.5&&ds.C<=2.5)pa.push({t:"Confidence Without Energy",d:"Your professional identity remains intact but energy and engagement have dropped. The disruption has affected motivation rather than self-belief. Identify one professional activity you can choose to do this week purely because it interests you, not because it is required. Autonomous choice, even small, rebuilds motivation from the inside."});
+  if(ds.C>=3.5&&ds.E<=2.5)pa.push({t:"Performing Without Direction",d:"Still functioning at a high level but lost sight of where you are heading. The classic pattern of sustaining operational performance while your own trajectory stalls. The transition audit and 30-day commitment address this directly."});
+  if(ds.A<=2.5&&ds.B<=2.5)pa.push({t:"Emotional and Identity Disruption",d:"Both emotional awareness and professional confidence are affected. When you cannot clearly name what you feel and simultaneously doubt your professional worth, the two reinforce each other. Start by naming three specific emotions you have experienced this week (not general labels). Then write down one professional contribution you have made recently that you are genuinely proud of. Separating emotional processing from identity work prevents them from compounding."});
+  if(ds.D>=3.5&&ds.E>=3.5)pa.push({t:"Clear Thinking and Forward Momentum",d:"Cognitive patterns and forward orientation are both strong. You maintain perspective and can see a path ahead. This is a significant resilience asset. Protect these strengths deliberately. Write down what could erode them and specify what you will do if that pressure arises. Pre-commitment is more effective than in-the-moment willpower."});
+  if(ds.B<=2.5&&ds.E<=2.5)pa.push({t:"Identity and Direction Under Pressure",d:"Both professional confidence and forward orientation are affected. The disruption has shaken not just how you feel about the event, but how you see your professional future. Ask yourself: What do I want to be known for in this institution, independent of my grade level? What am I uniquely positioned to contribute? If the promotion had gone differently, would the answers change? For most people, they do not."});
+  if(rng<=0.5)pa.push({t:"Uniform Impact",d:"Your scores are consistent across all five domains (spread of "+rng.toFixed(1)+" points). This suggests a global response to the disruption rather than selective impact on specific areas."});
+
+  document.getElementById("aF").classList.add("hd");
+  const rp=document.getElementById("rP");rp.classList.add("sh");
+  const bc=ov>=4?'bs':ov>=3?'bm':ov>=2?'bdv':'bc';
+  const bl=ov>=4?'Strong Resilience Foundation':ov>=3?'Moderate Resilience':ov>=2?'Developing Resilience':'Resilience Under Significant Pressure';
+
+  let h=`<div class="hero"><div class="sn">${ov.toFixed(1)}</div><div class="sl">Overall Resilience Score</div><div class="bd ${bc}">${bl}</div></div>`;
+  h+='<div class="cw"><h3>Your Resilience Profile</h3><canvas id="rc" width="400" height="400"></canvas></div>';
+  h+=`<div class="nar"><h3>Profile Summary</h3><p>Your overall resilience score of <strong>${ov.toFixed(1)}</strong> out of 5.0 places you in the <strong>${bl.toLowerCase()}</strong> range. Your strongest dimension is <strong>${DN[hi[0]]}</strong> (${hi[1].toFixed(1)}), and the area requiring most attention is <strong>${DN[lo[0]]}</strong> (${lo[1].toFixed(1)}).`;
+  if(rng>1.5)h+=` There is a significant ${rng.toFixed(1)}-point spread between your highest and lowest domains, indicating the disruption has affected some aspects of your functioning much more than others.</p>`;
+  else if(rng<0.5)h+=` Your scores are notably consistent across domains (${rng.toFixed(1)}-point spread), suggesting a uniform response to the disruption.</p>`;
+  else h+=` The ${rng.toFixed(1)}-point spread is within the typical range for professionals processing a career transition.</p>`;
+  h+='</div>';
+
+  h+=`<div class="phc"><h3>Disruption Phase</h3><div class="phn">${ph}</div><p>${pd}</p></div>`;
+
+  h+='<div class="sec"><div class="sec-l">Domain Analysis</div><h2>Your Five Dimensions in Detail</h2></div>';
+  ["A","B","C","D","E"].forEach(d=>{
+    const sc=ds[d],pc=Math.round(sc/5*100),lv=sc>=3.5?'h':sc>=2.5?'m':'l';
+    const cl=sc>=3.5?'var(--grn)':sc>=2.5?'var(--amb)':'var(--red)';const ip=IP[d][lv];
+    h+=`<div class="dc"><div class="dh"><div class="dn">${DN[d]}</div><div class="dsc" style="color:${cl}">${sc.toFixed(1)}<span style="font-size:14px;color:var(--muted)">/5.0</span></div></div><div class="dbr"><div class="dfl" style="width:${pc}%;background:${cl}"></div></div><div class="di">${ip.i}</div><div class="da"><strong>Action:</strong> ${ip.a}</div></div>`;
+  });
+
+  if(pa.length>0){h+='<div class="sec"><div class="sec-l">Cross-Domain Analysis</div><h2>Patterns Across Your Profile</h2><div class="sd">These patterns emerge from the interaction between your domain scores.</div></div>';pa.forEach(p=>{h+=`<div class="pc"><h4>${p.t}</h4><p>${p.d}</p></div>`})}
+
+  h+='<div class="sec"><div class="sec-l">Items Requiring Attention</div><h2>Your Three Lowest-Scoring Items</h2><div class="sd">These indicate where the disruption is most acutely felt.</div></div>';
+  li.forEach(l=>{h+=`<div class="fi"><div class="fn">Item ${l.id} | ${DN[l.d]} | Score: ${l.s}/5</div><div class="ft">${l.t}</div><div class="fnt">${IN[l.id]}</div></div>`});
+
+  const w2=so.slice(0,2);
+  h+='<div class="sec"><div class="sec-l">Recommended Actions</div><h2>Priority Focus Areas</h2><div class="sd">Based on your lowest-scoring domains, these are your most important areas for deliberate attention.</div></div>';
+  w2.forEach(([d,sc])=>{const sm=SSM[d];const cl=sc>=3.5?'var(--grn)':sc>=2.5?'var(--amb)':'var(--red)';h+=`<div class="sln"><div class="sdt" style="background:${cl}"></div><div><div class="sld">${DN[d]} (${sc.toFixed(1)}/5.0)</div><div class="sls" style="font-size:15px">${sm.s}</div><div class="slw">${sm.w}</div></div></div>`});
+
+  const r1=(document.getElementById("o1").value||"").trim(),r2=(document.getElementById("o2").value||"").trim(),r3=(document.getElementById("o3").value||"").trim();
+  if(r1||r2||r3){
+    h+='<div class="sec"><div class="sec-l">Your Reflections</div><h2>Personal Reflection Responses</h2></div>';
+    if(r1)h+=`<div class="ins"><h4>What gives you energy</h4><p>${esc(r1)}</p></div>`;
+    if(r2)h+=`<div class="ins"><h4>What you would like to feel differently</h4><p>${esc(r2)}</p></div>`;
+    if(r3)h+=`<div class="ins"><h4>Your ideal next chapter</h4><p>${esc(r3)}</p></div>`;
+    h+=`<div class="sec" id="aiBox"><div class="sec-l">Personalised Analysis</div><h2>What Your Reflections Reveal</h2><div class="sd">Analysing your written responses alongside your quantitative scores...</div><div id="aiContent" style="min-height:100px;display:flex;align-items:center;justify-content:center"><div style="color:var(--blue);font-size:14px"><svg width="24" height="24" viewBox="0 0 24 24" style="animation:spin 1s linear infinite;vertical-align:middle;margin-right:8px"><circle cx="12" cy="12" r="10" stroke="#2B9CD8" stroke-width="3" fill="none" stroke-dasharray="31.4" stroke-linecap="round"/></svg>Generating your personalised analysis...</div></div></div><style>@keyframes spin{to{transform:rotate(360deg)}}</style>`;
+  }
+
+  h+='<div class="acts"><button class="ab abp" onclick="window.print()">Print Results</button><button class="ab abs" onclick="rt()">Retake Assessment</button></div>';
+  rp.innerHTML=h;dR(ds);window.scrollTo({top:0,behavior:"smooth"});
+
+  // AI analysis of reflections
+  if(r1||r2||r3){
+    const scoreSum=Object.entries(ds).map(([d,s])=>`${DN[d]}: ${s.toFixed(1)}/5.0`).join(", ");
+    const prompt=`You are an expert organisational psychologist analysing a professional's resilience assessment results. The participant has completed a 20-item Resilience Snapshot as part of the NERC Resilience & Renewal Programme following a career promotion setback.
+
+QUANTITATIVE SCORES:
+${scoreSum}
+Overall: ${ov.toFixed(1)}/5.0
+Disruption Phase: ${ph}
+Strongest domain: ${DN[hi[0]]} (${hi[1].toFixed(1)})
+Weakest domain: ${DN[lo[0]]} (${lo[1].toFixed(1)})
+
+REFLECTION RESPONSES:
+${r1?'Q: What gives you energy and satisfaction?\nA: '+r1+'\n\n':''}${r2?'Q: What would you like to feel differently about?\nA: '+r2+'\n\n':''}${r3?'Q: How would you design your next career chapter?\nA: '+r3:''}
+
+Provide a personalised analysis in 4 sections using these exact headers (no markdown, just plain text with headers on their own lines):
+
+WHAT YOUR REFLECTIONS REVEAL
+Analyse what their written responses tell us about their emotional and professional state that the quantitative scores alone cannot capture. Look for themes, emotional tone, specificity vs vagueness, and what is present vs what is notably absent.
+
+ALIGNMENT WITH YOUR SCORES
+Identify where their reflections confirm, contradict, or add nuance to their quantitative profile. For example, if their energy score is low but they write passionately about a specific project, note that discrepancy and what it means.
+
+UNDERLYING PATTERNS
+Identify 2-3 deeper patterns: what the participant may not be seeing about themselves. What do the reflections suggest about their relationship with autonomy, competence, and relatedness (the three SDT needs)? What coping strategies are visible in how they write?
+
+YOUR PROGRAMME FOCUS
+Based on the combined quantitative and qualitative data, provide 2-3 specific, actionable recommendations for what this participant should pay most attention to during the programme. Be concrete and connected to specific programme sessions where possible.
+
+Write in second person (you/your). Be direct, specific, and professionally compassionate. Avoid generic advice. Every observation should be grounded in what this specific person wrote and scored. Do not use bullet points. Write in flowing paragraphs. Keep total length to approximately 500 words.`;
+
+    fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,messages:[{role:"user",content:prompt}]})})
+    .then(r=>r.json()).then(data=>{
+      const txt=data.content&&data.content[0]&&data.content[0].text?data.content[0].text:"Analysis could not be generated.";
+      const box=document.getElementById("aiContent");
+      if(box){
+        const sections=txt.split(/\n(?=WHAT YOUR REFLECTIONS|ALIGNMENT WITH|UNDERLYING PATTERNS|YOUR PROGRAMME FOCUS)/);
+        let html='';
+        sections.forEach(s=>{
+          const lines=s.trim().split('\n');
+          const header=lines[0].trim();
+          const body=lines.slice(1).join('\n').trim();
+          if(header&&body){
+            html+=`<div style="margin-bottom:18px"><h4 style="font-size:15px;color:var(--navy);margin-bottom:8px;font-weight:700">${header}</h4><p style="font-size:14px;color:var(--body);line-height:1.7">${esc(body)}</p></div>`;
+          } else if(s.trim()){
+            html+=`<p style="font-size:14px;color:var(--body);line-height:1.7;margin-bottom:12px">${esc(s.trim())}</p>`;
+          }
+        });
+        box.innerHTML=html;
+      }
+    }).catch(e=>{
+      const box=document.getElementById("aiContent");
+      if(box)box.innerHTML='<p style="font-size:14px;color:var(--muted)">Personalised analysis is not available at this time. Your reflection responses are recorded above for your reference during the programme.</p>';
+    });
+  }
+}
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\n/g,"<br>")}
+function rt(){document.getElementById("aF").classList.remove("hd");const rp=document.getElementById("rP");rp.classList.remove("sh");rp.innerHTML='';I.forEach(i=>{const c=document.querySelector(`input[name="q${i.id}"]:checked`);if(c)c.checked=false});document.getElementById("o1").value="";document.getElementById("o2").value="";document.getElementById("o3").value="";uP();window.scrollTo({top:0,behavior:"smooth"})}
+function dR(sc){setTimeout(()=>{const cv=document.getElementById("rc");if(!cv)return;const cx=cv.getContext("2d");const W=400,H=400,c=W/2,y=H/2,R=150;cv.width=W;cv.height=H;const k=["A","B","C","D","E"];const nm=["Emotional\nAwareness","Professional\nIdentity","Energy &\nEngagement","Cognitive\nPatterns","Forward\nOrientation"];const n=k.length,as=(Math.PI*2)/n,sa=-Math.PI/2;cx.clearRect(0,0,W,H);[1,2,3,4,5].forEach(l=>{const r=(l/5)*R;cx.beginPath();for(let i=0;i<=n;i++){const a=sa+i*as;const x=c+r*Math.cos(a),yy=y+r*Math.sin(a);i===0?cx.moveTo(x,yy):cx.lineTo(x,yy)}cx.strokeStyle=l===5?"#aabbcc":"#dde5eb";cx.lineWidth=l===5?1.5:0.8;cx.stroke()});k.forEach((kk,i)=>{const a=sa+i*as;cx.beginPath();cx.moveTo(c,y);cx.lineTo(c+R*Math.cos(a),y+R*Math.sin(a));cx.strokeStyle="#ccd5dd";cx.lineWidth=0.8;cx.stroke()});cx.beginPath();k.forEach((kk,i)=>{const a=sa+i*as;const r=(sc[kk]/5)*R;const x=c+r*Math.cos(a),yy=y+r*Math.sin(a);i===0?cx.moveTo(x,yy):cx.lineTo(x,yy)});cx.closePath();cx.fillStyle="rgba(43,156,216,0.18)";cx.fill();cx.strokeStyle="#2B9CD8";cx.lineWidth=2.5;cx.stroke();k.forEach((kk,i)=>{const a=sa+i*as;const r=(sc[kk]/5)*R;cx.beginPath();cx.arc(c+r*Math.cos(a),y+r*Math.sin(a),5,0,Math.PI*2);cx.fillStyle="#2B9CD8";cx.fill();cx.strokeStyle="#fff";cx.lineWidth=2;cx.stroke()});cx.fillStyle="#1A3A5C";cx.font="bold 12px 'Segoe UI',sans-serif";cx.textAlign="center";k.forEach((kk,i)=>{const a=sa+i*as;const lr=R+30;const x=c+lr*Math.cos(a),yy=y+lr*Math.sin(a);const ls=nm[i].split("\n");ls.forEach((l,li)=>{cx.fillText(l,x,yy+li*14-(ls.length-1)*7)})})},100)}
+</script>
+</body>
+</html>
