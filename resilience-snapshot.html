@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resilience Snapshot | KBS &amp; NERC</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --navy:#1A3A5C;--blue:#2B9CD8;--blue-light:#D8EBF5;--blue-wash:#EAF4FB;
+  --gold:#E8C820;--dark:#1a1a1a;--body:#2D3748;--muted:#5A7184;
+  --light-grey:#f5f7f9;--border:#d0d8e0;--white:#ffffff;--green:#2E8B6A;
+  --amber:#D4930A;--red:#C0392B;--teal:#1A8A7D;
+}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--light-grey);color:var(--body);line-height:1.6}
+.container{max-width:800px;margin:0 auto;padding:20px}
+
+/* Header */
+.header{background:var(--navy);color:var(--white);padding:40px 30px;text-align:center;margin-bottom:0}
+.header .kbs{font-size:11px;letter-spacing:4px;color:rgba(255,255,255,0.5);text-transform:uppercase;margin-bottom:16px}
+.header h1{font-size:32px;font-weight:700;margin-bottom:6px}
+.header .subtitle{font-size:16px;color:var(--blue);font-weight:400}
+.header .meta{font-size:12px;color:rgba(255,255,255,0.4);margin-top:16px}
+
+/* Privacy banner */
+.privacy{background:var(--blue-wash);border-left:4px solid var(--blue);padding:16px 20px;margin:24px 0;font-size:14px;color:var(--navy);border-radius:0 6px 6px 0}
+.privacy strong{display:block;margin-bottom:4px}
+
+/* Section */
+.section{background:var(--white);border-radius:10px;padding:28px 24px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,0.06)}
+.section-label{font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--blue);margin-bottom:6px;font-weight:600}
+.section h2{font-size:20px;color:var(--navy);margin-bottom:4px;font-weight:700}
+.section .section-desc{font-size:14px;color:var(--muted);margin-bottom:20px;font-style:italic}
+
+/* Likert item */
+.item{padding:16px 0;border-bottom:1px solid var(--border)}
+.item:last-child{border-bottom:none}
+.item-num{font-size:13px;font-weight:700;color:var(--blue);margin-bottom:4px}
+.item-text{font-size:15px;color:var(--dark);margin-bottom:12px;line-height:1.5}
+.likert{display:flex;justify-content:space-between;gap:6px}
+.likert label{flex:1;text-align:center;cursor:pointer}
+.likert label input{display:none}
+.likert label .btn{display:block;padding:10px 4px;border:2px solid var(--border);border-radius:8px;font-size:12px;color:var(--muted);transition:all 0.2s;font-weight:500;background:var(--white)}
+.likert label .btn .val{display:block;font-size:18px;font-weight:700;color:var(--navy);margin-bottom:2px}
+.likert label input:checked+.btn{border-color:var(--blue);background:var(--blue-wash);color:var(--navy)}
+.likert label:hover .btn{border-color:var(--blue);background:var(--blue-wash)}
+
+/* Open prompts */
+.open-prompt{margin-bottom:20px}
+.open-prompt label{display:block;font-size:15px;color:var(--dark);margin-bottom:8px;line-height:1.5}
+.open-prompt label span{font-weight:700;color:var(--blue);margin-right:6px}
+.open-prompt textarea{width:100%;border:2px solid var(--border);border-radius:8px;padding:12px;font-size:14px;font-family:inherit;resize:vertical;min-height:80px;transition:border-color 0.2s;color:var(--dark)}
+.open-prompt textarea:focus{outline:none;border-color:var(--blue)}
+
+/* Submit */
+.submit-wrap{text-align:center;padding:30px 0}
+.submit-btn{background:var(--blue);color:var(--white);border:none;padding:16px 48px;font-size:17px;font-weight:700;border-radius:10px;cursor:pointer;transition:background 0.2s;letter-spacing:0.5px}
+.submit-btn:hover{background:var(--navy)}
+.submit-btn:disabled{background:var(--border);cursor:not-allowed}
+
+/* Progress */
+.progress-bar{background:var(--border);height:6px;border-radius:3px;margin:20px 0;overflow:hidden}
+.progress-fill{height:100%;background:var(--blue);border-radius:3px;transition:width 0.4s ease}
+.progress-text{font-size:13px;color:var(--muted);text-align:right;margin-bottom:4px}
+
+/* ═══ RESULTS ═══ */
+.results{display:none}
+.results.show{display:block}
+.assessment.hidden{display:none}
+
+.score-hero{background:var(--navy);color:var(--white);border-radius:12px;padding:40px;text-align:center;margin-bottom:24px}
+.score-hero .score-number{font-size:72px;font-weight:800;line-height:1}
+.score-hero .score-label{font-size:14px;color:rgba(255,255,255,0.5);margin-top:4px;letter-spacing:2px;text-transform:uppercase}
+.score-hero .score-band{display:inline-block;margin-top:16px;padding:6px 20px;border-radius:20px;font-size:14px;font-weight:600}
+.band-strong{background:var(--green);color:var(--white)}
+.band-moderate{background:var(--gold);color:var(--white)}
+.band-developing{background:var(--amber);color:var(--white)}
+.band-critical{background:var(--red);color:var(--white)}
+
+/* Domain cards */
+.domain-card{background:var(--white);border-radius:10px;padding:20px 24px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06)}
+.domain-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.domain-name{font-size:16px;font-weight:700;color:var(--navy)}
+.domain-score{font-size:24px;font-weight:800;color:var(--blue)}
+.domain-bar{background:var(--border);height:10px;border-radius:5px;overflow:hidden;margin-bottom:10px}
+.domain-fill{height:100%;border-radius:5px;transition:width 0.6s ease}
+.domain-interp{font-size:14px;color:var(--muted);line-height:1.5}
+
+/* Radar chart */
+.chart-wrap{background:var(--white);border-radius:10px;padding:24px;margin-bottom:24px;box-shadow:0 1px 4px rgba(0,0,0,0.06);text-align:center}
+.chart-wrap h3{font-size:16px;color:var(--navy);margin-bottom:16px;font-weight:700}
+canvas{max-width:100%}
+
+/* Insight cards */
+.insight{background:var(--blue-wash);border-radius:10px;padding:20px 24px;margin-bottom:16px}
+.insight h4{font-size:15px;color:var(--navy);margin-bottom:6px;font-weight:700}
+.insight p{font-size:14px;color:var(--body);line-height:1.6}
+
+/* Actions */
+.actions{text-align:center;padding:24px 0;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.action-btn{padding:12px 28px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:2px solid var(--blue);transition:all 0.2s}
+.action-btn.primary{background:var(--blue);color:var(--white)}
+.action-btn.secondary{background:var(--white);color:var(--blue)}
+.action-btn:hover{opacity:0.85}
+
+/* Print */
+@media print{
+  body{background:#fff}
+  .header{padding:20px;page-break-after:avoid}
+  .submit-wrap,.actions,.privacy{display:none}
+  .section,.domain-card,.chart-wrap,.insight,.score-hero{break-inside:avoid;box-shadow:none;border:1px solid #ddd}
+}
+@media(max-width:600px){
+  .container{padding:12px}
+  .header{padding:24px 16px}
+  .header h1{font-size:24px}
+  .section{padding:20px 16px}
+  .likert{gap:4px}
+  .likert label .btn{padding:8px 2px;font-size:11px}
+  .likert label .btn .val{font-size:16px}
+  .score-hero .score-number{font-size:56px}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="kbs">Kaduna Business School</div>
+  <h1>Resilience Snapshot</h1>
+  <div class="subtitle">Self-Assessment Instrument</div>
+  <div class="meta">Resilience &amp; Renewal Programme &nbsp;|&nbsp; NERC</div>
+</div>
+
+<div class="container">
+
+<!-- ═══ ASSESSMENT FORM ═══ -->
+<div class="assessment" id="assessmentForm">
+
+  <div class="privacy">
+    <strong>This assessment is entirely private.</strong>
+    No data is stored, transmitted, or shared. Your responses exist only in your browser and disappear when you close the page. There are no right or wrong answers.
+  </div>
+
+  <div class="progress-text"><span id="progressCount">0</span> of 20 items completed</div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+
+  <!-- SECTION A -->
+  <div class="section">
+    <div class="section-label">Section A</div>
+    <h2>Emotional Awareness</h2>
+    <div class="section-desc">How clearly can you identify, articulate, and manage what you are feeling?</div>
+    <div id="sectionA"></div>
+  </div>
+
+  <!-- SECTION B -->
+  <div class="section">
+    <div class="section-label">Section B</div>
+    <h2>Professional Identity and Confidence</h2>
+    <div class="section-desc">How has your sense of professional capability and purpose shifted?</div>
+    <div id="sectionB"></div>
+  </div>
+
+  <!-- SECTION C -->
+  <div class="section">
+    <div class="section-label">Section C</div>
+    <h2>Energy and Engagement</h2>
+    <div class="section-desc">How have your energy, motivation, and participation patterns changed?</div>
+    <div id="sectionC"></div>
+  </div>
+
+  <!-- SECTION D -->
+  <div class="section">
+    <div class="section-label">Section D</div>
+    <h2>Cognitive Patterns</h2>
+    <div class="section-desc">What thought patterns have become more frequent or persistent?</div>
+    <div id="sectionD"></div>
+  </div>
+
+  <!-- SECTION E -->
+  <div class="section">
+    <div class="section-label">Section E</div>
+    <h2>Forward Orientation</h2>
+    <div class="section-desc">How do you see your professional path from here?</div>
+    <div id="sectionE"></div>
+  </div>
+
+  <!-- OPEN PROMPTS -->
+  <div class="section">
+    <div class="section-label">Section F</div>
+    <h2>Personal Reflection</h2>
+    <div class="section-desc">Take a few moments to respond in your own words.</div>
+
+    <div class="open-prompt">
+      <label><span>21.</span> What aspect of your professional life currently gives you the most energy and satisfaction?</label>
+      <textarea id="open1" placeholder="Your response..."></textarea>
+    </div>
+    <div class="open-prompt">
+      <label><span>22.</span> What is the one thing you would most like to feel differently about in the coming months?</label>
+      <textarea id="open2" placeholder="Your response..."></textarea>
+    </div>
+    <div class="open-prompt">
+      <label><span>23.</span> If you could design the next phase of your career without constraint, what would it look like?</label>
+      <textarea id="open3" placeholder="Your response..."></textarea>
+    </div>
+  </div>
+
+  <div class="submit-wrap">
+    <button class="submit-btn" id="submitBtn" onclick="generateResults()">Generate Your Resilience Snapshot</button>
+  </div>
+</div>
+
+<!-- ═══ RESULTS ═══ -->
+<div class="results" id="resultsPanel">
+  <div class="score-hero" id="scoreHero">
+    <div class="score-number" id="overallScore">--</div>
+    <div class="score-label">Overall Resilience Score</div>
+    <div class="score-band" id="scoreBand"></div>
+  </div>
+
+  <div class="chart-wrap">
+    <h3>Your Resilience Profile</h3>
+    <canvas id="radarChart" width="400" height="400"></canvas>
+  </div>
+
+  <div id="domainCards"></div>
+
+  <div class="section">
+    <div class="section-label">Key Insights</div>
+    <h2>What Your Results Suggest</h2>
+    <div id="insights"></div>
+  </div>
+
+  <div class="section" id="reflectionSummary" style="display:none">
+    <div class="section-label">Your Reflections</div>
+    <h2>Personal Reflection Responses</h2>
+    <div id="reflectionContent"></div>
+  </div>
+
+  <div class="actions">
+    <button class="action-btn primary" onclick="window.print()">Print Results</button>
+    <button class="action-btn secondary" onclick="retake()">Retake Assessment</button>
+  </div>
+</div>
+
+</div>
+
+<script>
+const items = [
+  // A: Emotional Awareness (1-4)
+  {id:1, text:"I can clearly name the primary emotions I am experiencing in this period of my career", domain:"A", reverse:false},
+  {id:2, text:"I notice a gap between what I express to colleagues and what I feel privately", domain:"A", reverse:true},
+  {id:3, text:"My emotional responses feel proportionate to the situations that trigger them", domain:"A", reverse:false},
+  {id:4, text:"I have found it useful to reflect on, or talk through, how I am feeling with someone I trust", domain:"A", reverse:false},
+  // B: Professional Identity (5-8)
+  {id:5, text:"I remain confident in the quality of my professional contributions", domain:"B", reverse:false},
+  {id:6, text:"My sense of professional purpose feels as strong as it did six months ago", domain:"B", reverse:false},
+  {id:7, text:"I trust my own judgment in my area of expertise as fully as I did before", domain:"B", reverse:false},
+  {id:8, text:"I feel that my experience and knowledge continue to be valued by those I work with", domain:"B", reverse:false},
+  // C: Energy & Engagement (9-12)
+  {id:9, text:"My energy levels at work have remained consistent over the past month", domain:"C", reverse:false},
+  {id:10, text:"I look forward to engaging with my professional responsibilities each day", domain:"C", reverse:false},
+  {id:11, text:"I am investing the same effort in developing my team and direct reports as before", domain:"C", reverse:false},
+  {id:12, text:"I have maintained my usual level of participation in meetings, committees, and institutional activities", domain:"C", reverse:false},
+  // D: Cognitive Patterns (13-16)
+  {id:13, text:"I find my mind returning to the same thoughts repeatedly, even when I try to focus elsewhere", domain:"D", reverse:true},
+  {id:14, text:"I am able to maintain perspective on my career as a whole rather than focusing on a single event", domain:"D", reverse:false},
+  {id:15, text:"I notice myself second-guessing decisions I would previously have made with confidence", domain:"D", reverse:true},
+  {id:16, text:"I can distinguish between a temporary period of disappointment and a fundamental reassessment of my direction", domain:"D", reverse:false},
+  // E: Forward Orientation (17-20)
+  {id:17, text:"I can articulate specific professional goals I am working toward in the next twelve months", domain:"E", reverse:false},
+  {id:18, text:"I feel motivated to invest in my own development and growth", domain:"E", reverse:false},
+  {id:19, text:"I see meaningful opportunities for contribution in my current role", domain:"E", reverse:false},
+  {id:20, text:"I believe the next chapter of my career is one I can define for myself", domain:"E", reverse:false},
+];
+
+const domainNames = {
+  A:"Emotional Awareness", B:"Professional Identity & Confidence",
+  C:"Energy & Engagement", D:"Cognitive Patterns", E:"Forward Orientation"
+};
+
+const labels = ["Strongly\nDisagree","Disagree","Neutral","Agree","Strongly\nAgree"];
+const sectionMap = {A:"sectionA",B:"sectionB",C:"sectionC",D:"sectionD",E:"sectionE"};
+
+// Build items
+items.forEach(item => {
+  const container = document.getElementById(sectionMap[item.domain]);
+  const div = document.createElement("div");
+  div.className = "item";
+  div.innerHTML = `
+    <div class="item-num">Question ${item.id}</div>
+    <div class="item-text">${item.text}</div>
+    <div class="likert">
+      ${[1,2,3,4,5].map(v => `
+        <label>
+          <input type="radio" name="q${item.id}" value="${v}" onchange="updateProgress()">
+          <div class="btn"><span class="val">${v}</span>${labels[v-1].replace('\n','<br>')}</div>
+        </label>
+      `).join("")}
+    </div>
+  `;
+  container.appendChild(div);
+});
+
+function updateProgress(){
+  let answered = 0;
+  items.forEach(item => { if(document.querySelector(`input[name="q${item.id}"]:checked`)) answered++; });
+  document.getElementById("progressCount").textContent = answered;
+  document.getElementById("progressFill").style.width = (answered/20*100)+"%";
+  document.getElementById("submitBtn").disabled = answered < 20;
+}
+updateProgress();
+
+function getScore(item){
+  const el = document.querySelector(`input[name="q${item.id}"]:checked`);
+  if(!el) return null;
+  let v = parseInt(el.value);
+  return item.reverse ? (6 - v) : v;
+}
+
+function generateResults(){
+  const scores = {};
+  const domainItems = {};
+  items.forEach(item => {
+    if(!domainItems[item.domain]) domainItems[item.domain] = [];
+    const s = getScore(item);
+    if(s === null){ alert("Please answer all 20 items before generating results."); return; }
+    domainItems[item.domain].push(s);
+  });
+
+  const domainScores = {};
+  let totalSum = 0, totalCount = 0;
+  Object.keys(domainItems).forEach(d => {
+    const arr = domainItems[d];
+    const avg = arr.reduce((a,b)=>a+b,0) / arr.length;
+    domainScores[d] = avg;
+    totalSum += avg;
+    totalCount++;
+  });
+
+  const overall = totalSum / totalCount;
+  const pct = Math.round(overall / 5 * 100);
+
+  // Display
+  document.getElementById("assessmentForm").classList.add("hidden");
+  document.getElementById("resultsPanel").classList.add("show");
+
+  document.getElementById("overallScore").textContent = overall.toFixed(1);
+  const bandEl = document.getElementById("scoreBand");
+  if(overall >= 4.0){ bandEl.textContent = "Strong Resilience Foundation"; bandEl.className = "score-band band-strong"; }
+  else if(overall >= 3.0){ bandEl.textContent = "Moderate Resilience"; bandEl.className = "score-band band-moderate"; }
+  else if(overall >= 2.0){ bandEl.textContent = "Developing Resilience"; bandEl.className = "score-band band-developing"; }
+  else { bandEl.textContent = "Resilience Under Significant Pressure"; bandEl.className = "score-band band-critical"; }
+
+  // Domain cards
+  const interpretations = {
+    A: {
+      high: "You have strong emotional self-awareness. You can name what you are feeling and the gap between your public and private experience is manageable.",
+      mid: "Your emotional awareness is developing. You may find it difficult to articulate precisely what you are feeling, or there may be a significant gap between what you express and what you experience privately.",
+      low: "Your emotional awareness needs attention. Difficulty naming emotions or a large gap between composure and inner experience can amplify stress and delay recovery."
+    },
+    B: {
+      high: "Your professional identity remains intact. You continue to trust your capabilities and feel that your contributions are valued.",
+      mid: "Your professional confidence has been shaken but not broken. Some self-doubt has entered areas where you previously felt certain.",
+      low: "Your professional identity has been significantly affected. Rebuilding confidence in your capabilities and reconnecting with your professional purpose is a priority."
+    },
+    C: {
+      high: "Your energy and engagement levels remain strong. You continue to invest in your responsibilities and participate actively.",
+      mid: "Your energy and engagement have shifted noticeably. You may be going through the motions in some areas or withdrawing from activities you previously valued.",
+      low: "Your energy and engagement are significantly depleted. Withdrawal from responsibilities and colleagues may be compounding the challenge you face."
+    },
+    D: {
+      high: "Your thinking patterns are healthy. You can maintain perspective and are not trapped in ruminative loops or persistent self-doubt.",
+      mid: "Some unhelpful thought patterns have become more frequent. Rumination, second-guessing, or difficulty maintaining perspective may be present.",
+      low: "Persistent ruminative thinking and self-doubt are significantly affecting your cognitive functioning. This is a priority area for the programme interventions."
+    },
+    E: {
+      high: "You have a clear sense of direction. You can see opportunities ahead and feel motivated to pursue them.",
+      mid: "Your forward orientation is uncertain. You may struggle to articulate clear goals or feel ambivalent about investing in your development.",
+      low: "You are finding it difficult to see a path forward. Reconnecting with purpose and building concrete goals is essential for your recovery."
+    }
+  };
+
+  const cardsHTML = Object.keys(domainScores).map(d => {
+    const score = domainScores[d];
+    const pct = Math.round(score/5*100);
+    const interp = score >= 3.5 ? interpretations[d].high : score >= 2.5 ? interpretations[d].mid : interpretations[d].low;
+    const color = score >= 3.5 ? "var(--green)" : score >= 2.5 ? "var(--gold)" : "var(--red)";
+    return `
+      <div class="domain-card">
+        <div class="domain-header">
+          <div class="domain-name">${domainNames[d]}</div>
+          <div class="domain-score" style="color:${color}">${score.toFixed(1)}<span style="font-size:14px;color:var(--muted)">/5.0</span></div>
+        </div>
+        <div class="domain-bar"><div class="domain-fill" style="width:${pct}%;background:${color}"></div></div>
+        <div class="domain-interp">${interp}</div>
+      </div>
+    `;
+  }).join("");
+  document.getElementById("domainCards").innerHTML = cardsHTML;
+
+  // Insights
+  const sorted = Object.entries(domainScores).sort((a,b) => a[1] - b[1]);
+  const lowest = sorted[0];
+  const highest = sorted[sorted.length-1];
+  const range = highest[1] - lowest[1];
+
+  let insightsHTML = `
+    <div class="insight">
+      <h4>Your Strongest Area: ${domainNames[highest[0]]}</h4>
+      <p>Scoring ${highest[1].toFixed(1)} out of 5.0, this is where your resilience is most intact. This is a resource you can draw on as you work through other areas.</p>
+    </div>
+    <div class="insight">
+      <h4>Area Requiring Most Attention: ${domainNames[lowest[0]]}</h4>
+      <p>Scoring ${lowest[1].toFixed(1)} out of 5.0, this domain represents your most significant challenge. The programme sessions are designed to address this directly.</p>
+    </div>
+  `;
+
+  if(range > 1.5){
+    insightsHTML += `
+      <div class="insight">
+        <h4>Uneven Profile</h4>
+        <p>There is a ${range.toFixed(1)}-point spread between your strongest and most challenged domains. This unevenness is common after a career disruption and suggests that while some aspects of your professional functioning remain strong, others have been significantly affected.</p>
+      </div>
+    `;
+  } else if(range < 0.5){
+    insightsHTML += `
+      <div class="insight">
+        <h4>Consistent Profile</h4>
+        <p>Your scores are relatively consistent across domains, with only a ${range.toFixed(1)}-point spread. This suggests a uniform response to the disruption rather than isolated areas of difficulty.</p>
+      </div>
+    `;
+  }
+
+  document.getElementById("insights").innerHTML = insightsHTML;
+
+  // Reflections
+  const r1 = document.getElementById("open1").value.trim();
+  const r2 = document.getElementById("open2").value.trim();
+  const r3 = document.getElementById("open3").value.trim();
+  if(r1 || r2 || r3){
+    document.getElementById("reflectionSummary").style.display = "block";
+    let rHTML = "";
+    if(r1) rHTML += `<div class="insight"><h4>What gives you energy</h4><p>${esc(r1)}</p></div>`;
+    if(r2) rHTML += `<div class="insight"><h4>What you would like to feel differently</h4><p>${esc(r2)}</p></div>`;
+    if(r3) rHTML += `<div class="insight"><h4>Your ideal next chapter</h4><p>${esc(r3)}</p></div>`;
+    document.getElementById("reflectionContent").innerHTML = rHTML;
+  }
+
+  // Radar chart
+  drawRadar(domainScores);
+
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\n/g,"<br>"); }
+
+function retake(){
+  document.getElementById("assessmentForm").classList.remove("hidden");
+  document.getElementById("resultsPanel").classList.remove("show");
+  items.forEach(item => {
+    const checked = document.querySelector(`input[name="q${item.id}"]:checked`);
+    if(checked) checked.checked = false;
+  });
+  document.getElementById("open1").value = "";
+  document.getElementById("open2").value = "";
+  document.getElementById("open3").value = "";
+  updateProgress();
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function drawRadar(scores){
+  const canvas = document.getElementById("radarChart");
+  const ctx = canvas.getContext("2d");
+  const W = 400, H = 400, cx = W/2, cy = H/2, R = 150;
+  canvas.width = W; canvas.height = H;
+
+  const keys = ["A","B","C","D","E"];
+  const names = ["Emotional\nAwareness","Professional\nIdentity","Energy &\nEngagement","Cognitive\nPatterns","Forward\nOrientation"];
+  const n = keys.length;
+  const angleStep = (Math.PI*2)/n;
+  const startAngle = -Math.PI/2;
+
+  ctx.clearRect(0,0,W,H);
+
+  // Grid circles
+  [1,2,3,4,5].forEach(level => {
+    const r = (level/5)*R;
+    ctx.beginPath();
+    for(let i=0;i<=n;i++){
+      const a = startAngle + i*angleStep;
+      const x = cx + r*Math.cos(a), y = cy + r*Math.sin(a);
+      i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+    }
+    ctx.strokeStyle = level===5 ? "#aabbcc" : "#dde5eb";
+    ctx.lineWidth = level===5 ? 1.5 : 0.8;
+    ctx.stroke();
+  });
+
+  // Axis lines
+  keys.forEach((k,i) => {
+    const a = startAngle + i*angleStep;
+    ctx.beginPath();
+    ctx.moveTo(cx,cy);
+    ctx.lineTo(cx+R*Math.cos(a), cy+R*Math.sin(a));
+    ctx.strokeStyle = "#ccd5dd";
+    ctx.lineWidth = 0.8;
+    ctx.stroke();
+  });
+
+  // Data polygon
+  ctx.beginPath();
+  keys.forEach((k,i) => {
+    const a = startAngle + i*angleStep;
+    const r = (scores[k]/5)*R;
+    const x = cx + r*Math.cos(a), y = cy + r*Math.sin(a);
+    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  });
+  ctx.closePath();
+  ctx.fillStyle = "rgba(43,156,216,0.18)";
+  ctx.fill();
+  ctx.strokeStyle = "#2B9CD8";
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  // Data points
+  keys.forEach((k,i) => {
+    const a = startAngle + i*angleStep;
+    const r = (scores[k]/5)*R;
+    ctx.beginPath();
+    ctx.arc(cx+r*Math.cos(a), cy+r*Math.sin(a), 5, 0, Math.PI*2);
+    ctx.fillStyle = "#2B9CD8";
+    ctx.fill();
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  });
+
+  // Labels
+  ctx.fillStyle = "#1A3A5C";
+  ctx.font = "bold 12px 'Segoe UI',sans-serif";
+  ctx.textAlign = "center";
+  keys.forEach((k,i) => {
+    const a = startAngle + i*angleStep;
+    const lr = R + 30;
+    const x = cx + lr*Math.cos(a), y = cy + lr*Math.sin(a);
+    const lines = names[i].split("\n");
+    lines.forEach((line,li) => {
+      ctx.fillText(line, x, y + li*14 - (lines.length-1)*7);
+    });
+  });
+}
+</script>
+</body>
+</html>
